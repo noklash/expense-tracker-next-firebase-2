@@ -1,15 +1,15 @@
 "use client"
 import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, QuerySnapshot, query, onSnapshot } from "firebase/firestore";
 import { db } from './firebase';
 
 
 export default function Home() {
   const [items, setItems] = useState([
-    {name: "coffee", price: 54.87},
-    {name: "milk", price: 34.87},
-    {name: "corn", price: 4.87},
+    // {name: "coffee", price: 54.87},
+    // {name: "milk", price: 34.87},
+    // {name: "corn", price: 4.87},
   ])
 
   const [newItem, setNewItem] = useState({name: "", price: ""})
@@ -24,12 +24,33 @@ export default function Home() {
         name: newItem.name.trim(),
         price: newItem.price,
       });
+      setNewItem({ name: "", price: ""})
     }
   }
 
 
   // READ FROM DATABASE
 
+  useEffect(() => {
+    const q = query(collection(db, "items"))
+    const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
+      let itemsArr = []
+
+      QuerySnapshot.forEach((doc) => {
+        itemsArr.push({...doc.data(), id: doc.id})
+      })
+      setItems(itemsArr)
+
+      // READ TOTAL FROM itemsArr
+      const calculateTotal = () => {
+        const totalPrice = itemsArr.reduce((sum, item) => sum + parseFloat(item.price), 0)
+        setTotal(totalPrice)
+      }
+      calculateTotal();
+      return () => unsubscribe();
+    })
+
+  }, []);
 
   // DELETE FROM DATABASE
 
